@@ -1,0 +1,7 @@
+_build/
+rebar.lock
+*.beam
+*.log
+*.pyc
+__pycache__/
+.DS_Store

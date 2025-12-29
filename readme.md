@@ -20,7 +20,7 @@ Build a high-parallel, distributed system for autonomous software development. T
 
 ## 1. Core Stack and Constraints
 
-- Backend: **Erlang/OTP** (rebar3), use `gen_statem` for task FSM.
+- Backend: **Erlang/OTP** (rebar3), use `gen_statem` for task FSM. **No Elixir or other BEAM languages**; the orchestrator must be implemented purely in Erlang.
 - State DB (SSOT): **PostgreSQL** (UUID PKs, JSONB for flexible fields).
 - Messaging: **RabbitMQ**
   - **AMQP** for reliable work dispatch (Core <-> Workers)

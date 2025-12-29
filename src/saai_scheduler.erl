@@ -85,7 +85,9 @@ dispatch_task(RunId, {TaskId, ClaimToken, LockedFiles, WorkerId, TaskType, Objec
             saai_db:append_event(RunId, TaskId, #{type => "TASK_DISPATCHED", payload => Payload}),
             saai_mqtt:publish(#{run_id => RunId, task_id => TaskId, status => "RUNNING"});
         {lock_conflict, File} ->
+            saai_db:update_task_status(TaskId, "BLOCKED"),
             saai_db:append_event(RunId, TaskId, #{type => "TASK_STATUS_CHANGED", payload => #{status => "BLOCKED", file => File}});
         Error ->
+            saai_db:update_task_status(TaskId, "FAILED"),
             saai_db:append_event(RunId, TaskId, #{type => "TASK_STATUS_CHANGED", payload => #{status => "FAILED", error => Error}})
     end.

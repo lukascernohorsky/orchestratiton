@@ -14,6 +14,7 @@ init([]) ->
         saai_repo:child_spec(),
         saai_amqp:child_spec(),
         saai_mqtt:child_spec(),
+        saai_result_handler:child_spec(),
         saai_scheduler:child_spec(),
         saai_http:child_spec()
     ],

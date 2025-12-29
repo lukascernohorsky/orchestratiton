@@ -17,6 +17,8 @@
     store_capsule/1,
     insert_fingerprint/1,
     update_run_status/2,
+    update_task_status/2,
+    mark_task_done/2,
     get_run/1,
     list_tasks/1,
     list_edges/1,
@@ -200,6 +202,27 @@ update_run_status(RunId, Status) ->
     Sql = "UPDATE runs SET status=$1 WHERE id=$2",
     saai_repo:query(Sql, [Status, RunId]),
     ok.
+
+update_task_status(TaskId, Status) ->
+    Sql = "UPDATE tasks SET status=$1, updated_at=now(), lease_expires_at=NULL, claim_token=NULL WHERE id=$2",
+    saai_repo:query(Sql, [Status, TaskId]),
+    ok.
+
+mark_task_done(RunId, TaskId) ->
+    saai_repo:transaction(fun(Conn) ->
+        UpdateSql = "UPDATE tasks SET status='DONE', updated_at=now(), lease_expires_at=NULL, claim_token=NULL WHERE id=$1",
+        _ = epgsql:equery(Conn, UpdateSql, [TaskId]),
+        DecSql = "UPDATE tasks t SET depends_remaining = depends_remaining - 1 " ++
+                 "WHERE run_id=$1 AND id IN (SELECT to_task_id FROM task_edges WHERE run_id=$1 AND from_task_id=$2) " ++
+                 "RETURNING id, depends_remaining, status",
+        {ok, _, DepRows} = epgsql:equery(Conn, DecSql, [RunId, TaskId]),
+        ReadyIds = [Id || {Id, 0, Status} <- DepRows, lists:member(Status, [<<"PLANNED">>, <<"BLOCKED">>, "PLANNED", "BLOCKED">> )],
+        lists:foreach(fun(TId) ->
+            ReadySql = "UPDATE tasks SET status='READY', updated_at=now() WHERE id=$1",
+            _ = epgsql:equery(Conn, ReadySql, [TId])
+        end, ReadyIds),
+        ReadyIds
+    end).
 
 get_run(RunId) ->
     Sql = "SELECT id, project_id, status, goal_text, settings, current_cost, current_tokens, started_at, finished_at FROM runs WHERE id=$1",

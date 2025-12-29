@@ -3,7 +3,7 @@
   {vsn, "0.1.0"},
   {registered, [saai_sup]},
   {mod, {saai_app, []}},
-  {applications, [kernel, stdlib, sasl, crypto, ssl]},
+  {applications, [kernel, stdlib, sasl, crypto, ssl, poolboy, epgsql, amqp_client, rabbit_common, emqtt, cowboy, jsx]},
   {env, []},
   {modules, []}
  ]}.

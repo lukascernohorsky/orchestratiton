@@ -26,8 +26,9 @@ init([]) ->
 handle_call(_Req, _From, State) -> {reply, ok, State}.
 handle_cast(_Msg, State) -> {noreply, State}.
 
-handle_info({#'basic.deliver'{}, #amqp_msg{payload = Payload}}, State) ->
-    handle_payload(Payload),
+handle_info({#'basic.deliver'{delivery_tag = Tag}, #amqp_msg{payload = Payload}}, State) ->
+    catch handle_payload(Payload),
+    saai_amqp:ack(Tag),
     {noreply, State};
 handle_info(_Info, State) -> {noreply, State}.
 
